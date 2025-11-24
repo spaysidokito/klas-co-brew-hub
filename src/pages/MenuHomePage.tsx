@@ -43,69 +43,72 @@ export default function MenuHomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200 shadow-sm">
+        <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Coffee className="h-8 w-8 text-primary" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <Coffee className="h-7 w-7 md:h-9 md:w-9 text-amber-800" />
               <div>
-                <h1 className="text-2xl font-semibold text-foreground">KlaséCo</h1>
-                <p className="text-sm text-muted-foreground">Premium Coffee Experience</p>
+                <h1 className="text-xl md:text-2xl font-bold text-amber-900">KlaséCo</h1>
+                <p className="text-xs md:text-sm text-amber-700 hidden sm:block">Premium Coffee Experience</p>
               </div>
             </div>
             <Button
               variant="ghost"
-              size="icon"
-              className="relative"
+              size="sm"
+              className="text-amber-800 hover:text-amber-900 hover:bg-amber-100"
               onClick={() => navigate('/staff')}
             >
-              <span className="text-sm text-muted-foreground">Staff</span>
+              <span className="text-sm">Staff</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-primary text-primary-foreground py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-light mb-4">Welcome to KlaséCo</h2>
-          <p className="text-lg md:text-xl font-light opacity-90">
+      <section className="relative bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 text-white py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE0YzMuMzEgMCA2IDIuNjkgNiA2cy0yLjY5IDYtNiA2LTYtMi42OS02LTYgMi42OS02IDYtNnpNNiAzNGMzLjMxIDAgNiAyLjY5IDYgNnMtMi42OSA2LTYgNi02LTIuNjktNi02IDIuNjktNiA2LTZ6TTM2IDM0YzMuMzEgMCA2IDIuNjkgNiA2cy0yLjY5IDYtNiA2LTYtMi42OS02LTYgMi42OS02IDYtNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h2 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            Welcome to KlaséCo
+          </h2>
+          <p className="text-3xl md:text-5xl font-serif italic tracking-wide text-amber-100">
             Where Ideas Brew
           </p>
         </div>
       </section>
 
       {/* Categories Grid */}
-      <section className="container mx-auto px-4 py-12">
-        <h3 className="text-3xl font-light mb-8 text-center">Our Menu</h3>
+      <section className="container mx-auto px-4 py-12 md:py-16">
+        <h3 className="text-3xl md:text-4xl font-bold mb-10 text-center text-foreground">Our Menu</h3>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-card rounded-lg overflow-hidden border border-border animate-pulse">
+              <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-md animate-pulse">
                 <div className="aspect-[4/3] bg-muted" />
-                <div className="p-6">
+                <div className="p-5">
                   <div className="h-6 bg-muted rounded w-3/4" />
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => navigate(`/category/${category.slug}`)}
-                className="group bg-card rounded-lg overflow-hidden border border-border hover:border-primary transition-all duration-300 hover:shadow-lg text-left"
+                className="group bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 text-left"
               >
-                <div className="aspect-[4/3] overflow-hidden">
+                <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-100 to-amber-50">
                   <img
                     src={category.image_url || ''}
                     alt={category.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
-                <div className="p-6">
-                  <h4 className="text-xl font-medium text-foreground group-hover:text-primary transition-colors">
+                <div className="p-5 md:p-6 bg-gradient-to-br from-white to-amber-50/30">
+                  <h4 className="text-xl md:text-2xl font-semibold text-foreground group-hover:text-amber-800 transition-colors">
                     {category.name}
                   </h4>
                 </div>
@@ -119,11 +122,11 @@ export default function MenuHomePage() {
       {totalItems > 0 && (
         <Button
           size="lg"
-          className="fixed bottom-6 right-6 rounded-full shadow-lg h-16 w-16 z-50"
+          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 rounded-full shadow-2xl h-14 w-14 md:h-16 md:w-16 z-50 bg-amber-800 hover:bg-amber-900 transition-all duration-300 hover:scale-110"
           onClick={() => setCartOpen(true)}
         >
-          <ShoppingCart className="h-6 w-6" />
-          <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-7 w-7 flex items-center justify-center text-sm font-medium">
+          <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
+          <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-red-600 text-white rounded-full h-6 w-6 md:h-7 md:w-7 flex items-center justify-center text-xs md:text-sm font-bold shadow-lg">
             {totalItems}
           </span>
         </Button>

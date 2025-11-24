@@ -114,16 +114,16 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-card rounded-lg shadow-2xl z-50 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:w-full max-w-2xl bg-white rounded-2xl shadow-2xl z-50 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
         <div className="relative">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 z-10"
+            className="absolute top-2 right-2 md:top-4 md:right-4 z-10 bg-white/90 hover:bg-white rounded-full shadow-lg"
             onClick={onClose}
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-gray-700" />
           </Button>
 
           {product.image_url && (
@@ -136,29 +136,29 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
             </div>
           )}
 
-          <div className="p-8">
-            <h2 className="text-3xl font-semibold mb-2">{product.name}</h2>
-            <p className="text-2xl font-semibold text-primary mb-6">
+          <div className="p-5 md:p-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-amber-900">{product.name}</h2>
+            <p className="text-2xl md:text-3xl font-bold text-amber-800 mb-6">
               ₱{sizePrice.toFixed(2)}
             </p>
 
-            <div className="space-y-6">
+            <div className="space-y-5 md:space-y-6">
               {hasSizeOptions() && (
                 <div>
-                  <h3 className="text-lg font-medium mb-3">Size</h3>
-                  <div className="grid grid-cols-3 gap-3">
+                  <h3 className="text-base md:text-lg font-semibold mb-3 text-amber-900">Size</h3>
+                  <div className="grid grid-cols-3 gap-2 md:gap-3">
                     {product.description?.includes('Daily:') && (
                       <button
                         onClick={() => setSelectedSize('daily')}
-                        className={`p-4 border-2 rounded-lg transition-all ${
+                        className={`p-3 md:p-4 border-2 rounded-xl transition-all shadow-sm ${
                           selectedSize === 'daily'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-amber-600 bg-amber-50 shadow-md'
+                            : 'border-gray-200 hover:border-amber-400 hover:shadow-md'
                         }`}
                       >
-                        <div className="font-medium">Daily</div>
-                        <div className="text-sm text-muted-foreground">16oz</div>
-                        <div className="text-primary font-semibold mt-1">
+                        <div className="font-semibold text-sm md:text-base">Daily</div>
+                        <div className="text-xs md:text-sm text-muted-foreground">16oz</div>
+                        <div className="text-amber-800 font-bold mt-1 text-sm md:text-base">
                           ₱{product.description.match(/Daily:\s*₱(\d+)/)?.[1]}
                         </div>
                       </button>
@@ -166,15 +166,15 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                     {product.description?.includes('Extra:') && (
                       <button
                         onClick={() => setSelectedSize('extra')}
-                        className={`p-4 border-2 rounded-lg transition-all ${
+                        className={`p-3 md:p-4 border-2 rounded-xl transition-all shadow-sm ${
                           selectedSize === 'extra'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-amber-600 bg-amber-50 shadow-md'
+                            : 'border-gray-200 hover:border-amber-400 hover:shadow-md'
                         }`}
                       >
-                        <div className="font-medium">Extra</div>
-                        <div className="text-sm text-muted-foreground">22oz</div>
-                        <div className="text-primary font-semibold mt-1">
+                        <div className="font-semibold text-sm md:text-base">Extra</div>
+                        <div className="text-xs md:text-sm text-muted-foreground">22oz</div>
+                        <div className="text-amber-800 font-bold mt-1 text-sm md:text-base">
                           ₱{product.description.match(/Extra:\s*₱(\d+)/)?.[1]}
                         </div>
                       </button>
@@ -182,15 +182,15 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                     {product.description?.includes('Hot:') && (
                       <button
                         onClick={() => setSelectedSize('hot')}
-                        className={`p-4 border-2 rounded-lg transition-all ${
+                        className={`p-3 md:p-4 border-2 rounded-xl transition-all shadow-sm ${
                           selectedSize === 'hot'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-amber-600 bg-amber-50 shadow-md'
+                            : 'border-gray-200 hover:border-amber-400 hover:shadow-md'
                         }`}
                       >
-                        <div className="font-medium">Hot</div>
-                        <div className="text-sm text-muted-foreground">12oz</div>
-                        <div className="text-primary font-semibold mt-1">
+                        <div className="font-semibold text-sm md:text-base">Hot</div>
+                        <div className="text-xs md:text-sm text-muted-foreground">12oz</div>
+                        <div className="text-amber-800 font-bold mt-1 text-sm md:text-base">
                           ₱{product.description.match(/Hot:\s*₱(\d+)/)?.[1]}
                         </div>
                       </button>
@@ -200,8 +200,8 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
               )}
               {addons.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-3">Add-ons</h3>
-                  <div className="space-y-3">
+                  <h3 className="text-base md:text-lg font-semibold mb-3 text-amber-900">Add-ons</h3>
+                  <div className="space-y-2 md:space-y-3">
                     {addons.map(addon => (
                       <div key={addon.id} className="flex items-center space-x-3">
                         <Checkbox
@@ -256,14 +256,18 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-6 border-t">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t border-amber-200">
                 <div>
                   <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-3xl font-semibold text-primary">
+                  <p className="text-2xl md:text-3xl font-bold text-amber-800">
                     ₱{totalPrice.toFixed(2)}
                   </p>
                 </div>
-                <Button size="lg" onClick={handleAddToCart}>
+                <Button 
+                  size="lg" 
+                  onClick={handleAddToCart}
+                  className="bg-amber-800 hover:bg-amber-900 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
                   Add to Cart
                 </Button>
               </div>
