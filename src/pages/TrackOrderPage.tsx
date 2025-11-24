@@ -52,31 +52,68 @@ export default function TrackOrderPage() {
     if (!orderId) return;
 
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            quantity,
-            unit_price,
-            subtotal,
-            menu_items (name),
-            order_item_addons (
+      // Remove # if present
+      const cleanOrderId = orderId.replace('#', '').trim();
+      
+      // Check if it's a UUID or simple number
+      const isUUID = cleanOrderId.includes('-') || cleanOrderId.length > 10;
+      
+      let foundOrder = null;
+      
+      if (isUUID) {
+        // Search by UUID directly
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items (
               quantity,
-              price,
-              addons (name)
+              unit_price,
+              subtotal,
+              menu_items (name),
+              order_item_addons (
+                quantity,
+                price,
+                addons (name)
+              )
             )
-          )
-        `)
-        .eq('id', orderId)
-        .single();
+          `)
+          .eq('id', cleanOrderId)
+          .single();
+        
+        if (!error) foundOrder = data;
+      } else {
+        // Search by simple number - get all orders and match
+        const { data: allOrders } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items (
+              quantity,
+              unit_price,
+              subtotal,
+              menu_items (name),
+              order_item_addons (
+                quantity,
+                price,
+                addons (name)
+              )
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(1000);
+        
+        if (allOrders) {
+          foundOrder = allOrders.find(o => getOrderNumber(o.id) === cleanOrderId);
+        }
+      }
 
-      if (error) {
+      if (foundOrder) {
+        setOrder(foundOrder);
+        setNotFound(false);
+      } else {
         setNotFound(true);
         setOrder(null);
-      } else {
-        setOrder(data);
-        setNotFound(false);
       }
     } catch (error) {
       console.error('Error loading order:', error);
@@ -295,32 +332,6 @@ export default function TrackOrderPage() {
                 </ul>
               </div>
 
-              {order.status === 'ready' && (
-                <div className="mt-4 pt-4 border-t border-amber-200">
-                  <Button 
-                    onClick={markAsComplete}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 rounded-xl shadow-lg"
-                  >
-                    Mark Order as Complete
-                  </Button>
-                </div>
-              )}
-
-              {order.status === 'served' && (
-                <div className="mt-4 pt-4 border-t border-amber-200 space-y-3">
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                    <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="text-green-800 font-semibold">Order Completed!</p>
-                    <p className="text-green-700 text-sm">Thank you for your order</p>
-                  </div>
-                  <Button 
-                    onClick={printReceipt}
-                    className="w-full bg-amber-800 hover:bg-amber-900 py-6 rounded-xl"
-                  >
-                    Print Receipt
-                  </Button>
-                </div>
-              )}
             </Card>
 
             <Card className="p-6 md:p-8 bg-white border-amber-200 rounded-2xl shadow-lg">
@@ -350,7 +361,7 @@ export default function TrackOrderPage() {
                             isComplete
                               ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white'
                               : 'bg-gray-200 text-gray-400',
-                            isCurrent && 'ring-4 ring-amber-300 scale-110 animate-pulse'
+                            isCurrent && order.status !== 'served' && 'ring-4 ring-amber-300 scale-110 animate-pulse'
                           )}
                         >
                           <Icon className="h-7 w-7 md:h-9 md:w-9" />
@@ -364,7 +375,7 @@ export default function TrackOrderPage() {
                           >
                             {step.label}
                           </p>
-                          {isCurrent && (
+                          {isCurrent && order.status !== 'served' && (
                             <p className="text-sm text-amber-700 font-medium animate-pulse">In progress...</p>
                           )}
                           {isComplete && !isCurrent && (
@@ -377,6 +388,34 @@ export default function TrackOrderPage() {
                 </div>
               </div>
             </Card>
+
+            {/* Action Buttons at Bottom */}
+            {order.status === 'ready' && (
+              <Card className="p-6 bg-white border-amber-200 rounded-2xl shadow-lg">
+                <Button 
+                  onClick={markAsComplete}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 rounded-xl shadow-lg text-lg"
+                >
+                  Mark Order as Complete
+                </Button>
+              </Card>
+            )}
+
+            {order.status === 'served' && (
+              <Card className="p-6 bg-white border-amber-200 rounded-2xl shadow-lg space-y-4">
+                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 text-center">
+                  <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                  <p className="text-green-800 font-bold text-xl">Order Completed!</p>
+                  <p className="text-green-700 text-base mt-1">Thank you for your order</p>
+                </div>
+                <Button 
+                  onClick={printReceipt}
+                  className="w-full bg-amber-800 hover:bg-amber-900 py-6 rounded-xl font-bold text-lg"
+                >
+                  Print Receipt
+                </Button>
+              </Card>
+            )}
           </div>
         )}
       </main>
