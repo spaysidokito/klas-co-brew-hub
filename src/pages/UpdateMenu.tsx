@@ -14,7 +14,11 @@ export default function UpdateMenu() {
     setStatus('Starting update...');
 
     try {
-      // Step 1: Create/Update categories
+      // Step 1: Delete old categories (Pastries, Specialty Coffee, etc.)
+      setStatus('Removing old categories...');
+      await supabase.from('categories').delete().not('slug', 'in', '("coffee","non-coffee","fruit-sodas")');
+
+      // Step 2: Create/Update categories
       setStatus('Creating categories...');
       const categories = [
         { name: 'Coffee', slug: 'coffee', image_url: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400' },
@@ -26,15 +30,15 @@ export default function UpdateMenu() {
         await supabase.from('categories').upsert(cat, { onConflict: 'slug' });
       }
 
-      // Step 2: Get category IDs
+      // Step 3: Get category IDs
       const { data: categoriesData } = await supabase.from('categories').select('id, slug');
       const categoryMap = Object.fromEntries(categoriesData?.map(c => [c.slug, c.id]) || []);
 
-      // Step 3: Delete old menu items
+      // Step 4: Delete old menu items
       setStatus('Clearing old menu items...');
       await supabase.from('menu_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-      // Step 4: Insert new menu items
+      // Step 5: Insert new menu items
       setStatus('Adding new menu items...');
       const menuItems = [
         // Coffee items
@@ -79,7 +83,7 @@ export default function UpdateMenu() {
       const { error: itemsError } = await supabase.from('menu_items').insert(menuItems);
       if (itemsError) throw itemsError;
 
-      // Step 5: Update add-ons
+      // Step 6: Update add-ons
       setStatus('Updating add-ons...');
       await supabase.from('addons').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       

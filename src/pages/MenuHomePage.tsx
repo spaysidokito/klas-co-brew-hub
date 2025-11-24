@@ -70,7 +70,7 @@ export default function MenuHomePage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-light mb-4">Welcome to KlaséCo</h2>
           <p className="text-lg md:text-xl font-light opacity-90">
-            Crafted with passion, served with excellence
+            Where Ideas Brew
           </p>
         </div>
       </section>

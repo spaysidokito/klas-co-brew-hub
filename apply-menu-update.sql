@@ -2,6 +2,9 @@
 -- KlaséCo Menu Update - Apply this in Supabase SQL Editor
 -- ============================================
 
+-- Delete old categories first
+DELETE FROM public.categories WHERE slug NOT IN ('coffee', 'non-coffee', 'fruit-sodas');
+
 -- Update/Create categories to match the menu structure
 INSERT INTO public.categories (name, slug, image_url) VALUES
   ('Coffee', 'coffee', 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400'),
