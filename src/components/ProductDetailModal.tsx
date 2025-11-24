@@ -27,9 +27,12 @@ interface ProductDetailModalProps {
   onClose: () => void;
 }
 
+type SizeOption = 'daily' | 'extra' | 'hot';
+
 export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps) => {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
+  const [selectedSize, setSelectedSize] = useState<SizeOption>('daily');
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const { addItem } = useCart();
@@ -53,6 +56,27 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
     setSelectedAddons(newSelected);
   };
 
+  // Parse size prices from description
+  const getSizePrice = () => {
+    const desc = product.description || '';
+    const dailyMatch = desc.match(/Daily:\s*₱(\d+)/);
+    const extraMatch = desc.match(/Extra:\s*₱(\d+)/);
+    const hotMatch = desc.match(/Hot:\s*₱(\d+)/);
+    
+    const prices = {
+      daily: dailyMatch ? parseInt(dailyMatch[1]) : product.base_price,
+      extra: extraMatch ? parseInt(extraMatch[1]) : product.base_price + 20,
+      hot: hotMatch ? parseInt(hotMatch[1]) : product.base_price - 10,
+    };
+    
+    return prices[selectedSize];
+  };
+
+  const hasSizeOptions = () => {
+    const desc = product.description || '';
+    return desc.includes('Daily:') || desc.includes('Extra:') || desc.includes('Hot:');
+  };
+
   const handleAddToCart = () => {
     const cartAddons: CartAddon[] = addons
       .filter(addon => selectedAddons.has(addon.id))
@@ -63,11 +87,14 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
         quantity: 1,
       }));
 
+    const sizePrice = getSizePrice();
+    const sizeName = selectedSize.charAt(0).toUpperCase() + selectedSize.slice(1);
+
     addItem({
       menuItemId: product.id,
-      name: product.name,
+      name: `${product.name} (${sizeName})`,
       image: product.image_url || '',
-      basePrice: product.base_price,
+      basePrice: sizePrice,
       quantity,
       addons: cartAddons,
       notes: notes.trim(),
@@ -77,8 +104,9 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
     onClose();
   };
 
+  const sizePrice = getSizePrice();
   const totalPrice =
-    (product.base_price +
+    (sizePrice +
       addons
         .filter(addon => selectedAddons.has(addon.id))
         .reduce((sum, addon) => sum + addon.price, 0)) *
@@ -110,11 +138,66 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
 
           <div className="p-8">
             <h2 className="text-3xl font-semibold mb-2">{product.name}</h2>
-            {product.description && (
-              <p className="text-muted-foreground mb-6">{product.description}</p>
-            )}
+            <p className="text-2xl font-semibold text-primary mb-6">
+              ₱{sizePrice.toFixed(2)}
+            </p>
 
             <div className="space-y-6">
+              {hasSizeOptions() && (
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Size</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {product.description?.includes('Daily:') && (
+                      <button
+                        onClick={() => setSelectedSize('daily')}
+                        className={`p-4 border-2 rounded-lg transition-all ${
+                          selectedSize === 'daily'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="font-medium">Daily</div>
+                        <div className="text-sm text-muted-foreground">16oz</div>
+                        <div className="text-primary font-semibold mt-1">
+                          ₱{product.description.match(/Daily:\s*₱(\d+)/)?.[1]}
+                        </div>
+                      </button>
+                    )}
+                    {product.description?.includes('Extra:') && (
+                      <button
+                        onClick={() => setSelectedSize('extra')}
+                        className={`p-4 border-2 rounded-lg transition-all ${
+                          selectedSize === 'extra'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="font-medium">Extra</div>
+                        <div className="text-sm text-muted-foreground">22oz</div>
+                        <div className="text-primary font-semibold mt-1">
+                          ₱{product.description.match(/Extra:\s*₱(\d+)/)?.[1]}
+                        </div>
+                      </button>
+                    )}
+                    {product.description?.includes('Hot:') && (
+                      <button
+                        onClick={() => setSelectedSize('hot')}
+                        className={`p-4 border-2 rounded-lg transition-all ${
+                          selectedSize === 'hot'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="font-medium">Hot</div>
+                        <div className="text-sm text-muted-foreground">12oz</div>
+                        <div className="text-primary font-semibold mt-1">
+                          ₱{product.description.match(/Hot:\s*₱(\d+)/)?.[1]}
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               {addons.length > 0 && (
                 <div>
                   <h3 className="text-lg font-medium mb-3">Add-ons</h3>
