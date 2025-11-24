@@ -32,7 +32,14 @@ export default function MenuHomePage() {
         .order('name');
 
       if (error) throw error;
-      setCategories(data || []);
+      
+      // Reorder: Coffee, Non Coffee, Fruit Sodas
+      const orderedCategories = (data || []).sort((a, b) => {
+        const order = ['Coffee', 'Non Coffee', 'Fruit Sodas'];
+        return order.indexOf(a.name) - order.indexOf(b.name);
+      });
+      
+      setCategories(orderedCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
     } finally {
@@ -46,11 +53,22 @@ export default function MenuHomePage() {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200 shadow-sm">
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 md:gap-3">
-              <Coffee className="h-7 w-7 md:h-9 md:w-9 text-amber-800" />
-              <div>
+            <div className="flex items-center gap-2 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-3">
+                <img 
+                  src="/klaseco-logo.png" 
+                  alt="KlaséCo Logo" 
+                  className="h-12 w-12 md:h-16 md:w-16 object-contain"
+                />
+                <img 
+                  src="/bsit-logo.png" 
+                  alt="BSIT Logo" 
+                  className="h-12 w-12 md:h-16 md:w-16 object-contain"
+                />
+              </div>
+              <div className="border-l-2 border-amber-300 pl-2 md:pl-3">
                 <h1 className="text-xl md:text-2xl font-bold text-amber-900">KlaséCo</h1>
-                <p className="text-xs md:text-sm text-amber-700 hidden sm:block">Premium Coffee Experience</p>
+                <p className="text-xs md:text-sm text-amber-700 hidden sm:block">Where Ideas Brew</p>
               </div>
             </div>
             <Button
@@ -102,9 +120,10 @@ export default function MenuHomePage() {
               >
                 <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-100 to-amber-50">
                   <img
-                    src={category.image_url || ''}
+                    src={category.image_url ? `${category.image_url}?t=${Date.now()}` : ''}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    key={category.image_url}
                   />
                 </div>
                 <div className="p-5 md:p-6 bg-gradient-to-br from-white to-amber-50/30">

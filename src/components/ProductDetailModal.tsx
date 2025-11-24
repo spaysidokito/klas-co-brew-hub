@@ -139,7 +139,7 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
           <div className="p-5 md:p-8">
             <h2 className="text-2xl md:text-3xl font-bold mb-2 text-amber-900">{product.name}</h2>
             <p className="text-2xl md:text-3xl font-bold text-amber-800 mb-6">
-              ₱{sizePrice.toFixed(2)}
+              ₱{sizePrice.toFixed(0)}
             </p>
 
             <div className="space-y-5 md:space-y-6">
@@ -159,7 +159,7 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                         <div className="font-semibold text-sm md:text-base">Daily</div>
                         <div className="text-xs md:text-sm text-muted-foreground">16oz</div>
                         <div className="text-amber-800 font-bold mt-1 text-sm md:text-base">
-                          ₱{product.description.match(/Daily:\s*₱(\d+)/)?.[1]}
+                          ₱{product.description.match(/Daily:\s*₱(\d+)/)?.[1] || '70'}
                         </div>
                       </button>
                     )}
@@ -175,7 +175,7 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                         <div className="font-semibold text-sm md:text-base">Extra</div>
                         <div className="text-xs md:text-sm text-muted-foreground">22oz</div>
                         <div className="text-amber-800 font-bold mt-1 text-sm md:text-base">
-                          ₱{product.description.match(/Extra:\s*₱(\d+)/)?.[1]}
+                          ₱{product.description.match(/Extra:\s*₱(\d+)/)?.[1] || '90'}
                         </div>
                       </button>
                     )}
@@ -191,7 +191,7 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                         <div className="font-semibold text-sm md:text-base">Hot</div>
                         <div className="text-xs md:text-sm text-muted-foreground">12oz</div>
                         <div className="text-amber-800 font-bold mt-1 text-sm md:text-base">
-                          ₱{product.description.match(/Hot:\s*₱(\d+)/)?.[1]}
+                          ₱{product.description.match(/Hot:\s*₱(\d+)/)?.[1] || '60'}
                         </div>
                       </button>
                     )}
@@ -260,7 +260,7 @@ export const ProductDetailModal = ({ product, onClose }: ProductDetailModalProps
                 <div>
                   <p className="text-sm text-muted-foreground">Total</p>
                   <p className="text-2xl md:text-3xl font-bold text-amber-800">
-                    ₱{totalPrice.toFixed(2)}
+                    ₱{totalPrice.toFixed(0)}
                   </p>
                 </div>
                 <Button 

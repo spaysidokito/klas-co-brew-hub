@@ -1,12 +1,40 @@
 import { useNavigate } from 'react-router-dom';
-import { Coffee, UserCircle, ShieldCheck } from 'lucide-react';
+import { Coffee, UserCircle, ShieldCheck, LogOut, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function StaffRoleSelection() {
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    sessionStorage.removeItem('staffAuth');
+    sessionStorage.removeItem('staffRole');
+    toast.success('Logged out successfully');
+    navigate('/staff/login');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 flex items-center justify-center p-4">
+      <div className="fixed top-4 right-4 flex gap-2 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="bg-white/90 backdrop-blur-sm"
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleLogout}
+          className="bg-white/90 backdrop-blur-sm text-red-600 border-red-300 hover:bg-red-50"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
+      </div>
       <div className="w-full max-w-5xl">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center gap-3 mb-6">

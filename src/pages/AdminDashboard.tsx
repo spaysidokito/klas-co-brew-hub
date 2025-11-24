@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, DollarSign, Package, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, DollarSign, Package, TrendingUp, Crop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 
 interface MenuItem {
   id: string;
@@ -53,6 +55,20 @@ export default function AdminDashboard() {
     category_id: '',
     image_url: '',
   });
+  const [sizeVariations, setSizeVariations] = useState({
+    daily: { enabled: false, price: '' },
+    extra: { enabled: false, price: '' },
+    hot: { enabled: false, price: '' },
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryImageFile, setCategoryImageFile] = useState<File | null>(null);
+  const [categoryImagePreview, setCategoryImagePreview] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const navigate = useNavigate();
 
   const getOrderNumber = (id: string) => {
@@ -75,8 +91,18 @@ export default function AdminDashboard() {
   };
 
   const loadCategories = async () => {
-    const { data } = await supabase.from('categories').select('*').order('name');
-    setCategories(data || []);
+    const { data } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name');
+    
+    // Reorder: Coffee, Non Coffee, Fruit Sodas
+    const orderedCategories = (data || []).sort((a, b) => {
+      const order = ['Coffee', 'Non Coffee', 'Fruit Sodas'];
+      return order.indexOf(a.name) - order.indexOf(b.name);
+    });
+    
+    setCategories(orderedCategories);
   };
 
   const loadOrders = async () => {
@@ -134,18 +160,83 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleImageUpload = async (): Promise<string | null> => {
+    if (!imageFile) return formData.image_url || null;
+
+    setUploading(true);
+    try {
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `menu-items/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSaveItem = async () => {
-    if (!formData.name || !formData.base_price || !formData.category_id) {
+    if (!formData.name || !formData.category_id) {
       toast.error('Please fill in all required fields');
       return;
     }
 
+    // Build description from size variations
+    const variations = [];
+    if (sizeVariations.daily.enabled && sizeVariations.daily.price) {
+      variations.push(`Daily: ₱${sizeVariations.daily.price}`);
+    }
+    if (sizeVariations.extra.enabled && sizeVariations.extra.price) {
+      variations.push(`Extra: ₱${sizeVariations.extra.price}`);
+    }
+    if (sizeVariations.hot.enabled && sizeVariations.hot.price) {
+      variations.push(`Hot: ₱${sizeVariations.hot.price}`);
+    }
+    const description = variations.length > 0 ? variations.join(' | ') : formData.description;
+
+    // Build size_prices JSON
+    const sizePrices: any = {};
+    if (sizeVariations.daily.enabled && sizeVariations.daily.price) {
+      sizePrices.Daily = parseInt(sizeVariations.daily.price);
+    }
+    if (sizeVariations.extra.enabled && sizeVariations.extra.price) {
+      sizePrices.Extra = parseInt(sizeVariations.extra.price);
+    }
+    if (sizeVariations.hot.enabled && sizeVariations.hot.price) {
+      sizePrices.Hot = parseInt(sizeVariations.hot.price);
+    }
+
+    // Determine base price (lowest variation or manual input)
+    let basePrice = formData.base_price ? parseFloat(formData.base_price) : 0;
+    if (Object.keys(sizePrices).length > 0) {
+      basePrice = Math.min(...Object.values(sizePrices).map(p => Number(p)));
+    }
+
+    // Upload image if provided
+    const imageUrl = await handleImageUpload();
+    if (imageFile && !imageUrl) return; // Stop if upload failed
+
     const itemData = {
       name: formData.name,
-      description: formData.description || null,
-      base_price: parseFloat(formData.base_price),
+      description: description || null,
+      base_price: basePrice,
       category_id: formData.category_id,
-      image_url: formData.image_url || null,
+      image_url: imageUrl,
+      size_prices: Object.keys(sizePrices).length > 0 ? sizePrices : null,
       is_available: true,
     };
 
@@ -185,6 +276,12 @@ export default function AdminDashboard() {
       category_id: '',
       image_url: '',
     });
+    setSizeVariations({
+      daily: { enabled: false, price: '' },
+      extra: { enabled: false, price: '' },
+      hot: { enabled: false, price: '' },
+    });
+    setImageFile(null);
   };
 
   const openEditModal = (item: MenuItem) => {
@@ -195,6 +292,19 @@ export default function AdminDashboard() {
       category_id: item.category_id,
       image_url: item.image_url || '',
     });
+    
+    // Parse existing size variations from description
+    const desc = item.description || '';
+    const dailyMatch = desc.match(/Daily:\s*₱(\d+)/);
+    const extraMatch = desc.match(/Extra:\s*₱(\d+)/);
+    const hotMatch = desc.match(/Hot:\s*₱(\d+)/);
+    
+    setSizeVariations({
+      daily: { enabled: !!dailyMatch, price: dailyMatch ? dailyMatch[1] : '' },
+      extra: { enabled: !!extraMatch, price: extraMatch ? extraMatch[1] : '' },
+      hot: { enabled: !!hotMatch, price: hotMatch ? hotMatch[1] : '' },
+    });
+    
     setEditingItem(item);
   };
 
@@ -212,6 +322,134 @@ export default function AdminDashboard() {
       toast.success('Transaction history cleared');
       loadOrders();
       loadStats();
+    }
+  };
+
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const createImage = (url: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('error', (error) => reject(error));
+      image.src = url;
+    });
+
+  const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<Blob> => {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) throw new Error('No 2d context');
+
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      pixelCrop.width,
+      pixelCrop.height
+    );
+
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas is empty'));
+      }, 'image/jpeg', 0.95);
+    });
+  };
+
+  const handleCategoryImageSelect = (file: File | null) => {
+    if (file) {
+      setCategoryImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCategoryImagePreview(reader.result as string);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropConfirm = async () => {
+    if (!categoryImagePreview || !croppedAreaPixels) return;
+    
+    try {
+      const croppedBlob = await getCroppedImg(categoryImagePreview, croppedAreaPixels);
+      const croppedFile = new File([croppedBlob], categoryImageFile?.name || 'image.jpg', {
+        type: 'image/jpeg',
+      });
+      setCategoryImageFile(croppedFile);
+      setShowCropper(false);
+      toast.success('Image cropped successfully');
+    } catch (error) {
+      console.error('Error cropping image:', error);
+      toast.error('Failed to crop image');
+    }
+  };
+
+  const handleUpdateCategoryImage = async () => {
+    if (!editingCategory || !categoryImageFile) {
+      toast.error('Please select an image');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileName = `category-${editingCategory.slug}-${Date.now()}.jpg`;
+      const filePath = `categories/${fileName}`;
+
+      // Upload the image
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, categoryImageFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      // Update database
+      const { error: updateError } = await supabase
+        .from('categories')
+        .update({ image_url: publicUrl })
+        .eq('id', editingCategory.id);
+
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+
+      toast.success('Category image updated successfully!');
+      
+      // Clear state
+      setEditingCategory(null);
+      setCategoryImageFile(null);
+      setCategoryImagePreview(null);
+      
+      // Reload categories
+      await loadCategories();
+    } catch (error: any) {
+      console.error('Error updating category image:', error);
+      toast.error(error.message || 'Failed to update category image');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -275,8 +513,9 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="menu" className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-6">
-            <TabsTrigger value="menu">Menu Management</TabsTrigger>
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-3 mb-6">
+            <TabsTrigger value="menu">Menu Items</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
@@ -372,6 +611,39 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          <TabsContent value="categories">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-amber-900 mb-2">Category Images</h2>
+              <p className="text-sm text-gray-600">Upload custom images for each category</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {categories.map(category => (
+                <Card key={category.id} className="p-4 bg-white border-amber-200">
+                  <div className="aspect-[4/3] overflow-hidden rounded-lg mb-4 bg-gradient-to-br from-amber-100 to-amber-50">
+                    {category.image_url && (
+                      <img
+                        src={`${category.image_url}?t=${Date.now()}`}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                        key={category.image_url}
+                      />
+                    )}
+                  </div>
+                  <h3 className="text-lg font-bold text-amber-900 mb-3">{category.name}</h3>
+                  <Button
+                    onClick={() => setEditingCategory(category)}
+                    className="w-full bg-amber-800 hover:bg-amber-900"
+                    size="sm"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Change Image
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
           <TabsContent value="transactions">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-amber-900">Transaction History</h2>
@@ -443,30 +715,6 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-amber-900 font-semibold">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="mt-2"
-                  placeholder="e.g., Daily: ₱70 | Extra: ₱90 | Hot: ₱60"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="base_price" className="text-amber-900 font-semibold">Base Price *</Label>
-                <Input
-                  id="base_price"
-                  type="number"
-                  value={formData.base_price}
-                  onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
-                  className="mt-2"
-                  placeholder="70"
-                />
-              </div>
-
-              <div>
                 <Label htmlFor="category" className="text-amber-900 font-semibold">Category *</Label>
                 <select
                   id="category"
@@ -482,28 +730,278 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <Label htmlFor="image_url" className="text-amber-900 font-semibold">Image URL</Label>
-                <Input
-                  id="image_url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                <Label className="text-amber-900 font-semibold mb-3 block">Size Variations & Prices</Label>
+                <div className="space-y-3 bg-amber-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="daily"
+                      checked={sizeVariations.daily.enabled}
+                      onChange={(e) => setSizeVariations({
+                        ...sizeVariations,
+                        daily: { ...sizeVariations.daily, enabled: e.target.checked }
+                      })}
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="daily" className="flex-1">Daily (16oz)</Label>
+                    <Input
+                      type="number"
+                      value={sizeVariations.daily.price}
+                      onChange={(e) => setSizeVariations({
+                        ...sizeVariations,
+                        daily: { ...sizeVariations.daily, price: e.target.value }
+                      })}
+                      disabled={!sizeVariations.daily.enabled}
+                      className="w-24"
+                      placeholder="70"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="extra"
+                      checked={sizeVariations.extra.enabled}
+                      onChange={(e) => setSizeVariations({
+                        ...sizeVariations,
+                        extra: { ...sizeVariations.extra, enabled: e.target.checked }
+                      })}
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="extra" className="flex-1">Extra (22oz)</Label>
+                    <Input
+                      type="number"
+                      value={sizeVariations.extra.price}
+                      onChange={(e) => setSizeVariations({
+                        ...sizeVariations,
+                        extra: { ...sizeVariations.extra, price: e.target.value }
+                      })}
+                      disabled={!sizeVariations.extra.enabled}
+                      className="w-24"
+                      placeholder="90"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="hot"
+                      checked={sizeVariations.hot.enabled}
+                      onChange={(e) => setSizeVariations({
+                        ...sizeVariations,
+                        hot: { ...sizeVariations.hot, enabled: e.target.checked }
+                      })}
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="hot" className="flex-1">Hot (12oz)</Label>
+                    <Input
+                      type="number"
+                      value={sizeVariations.hot.price}
+                      onChange={(e) => setSizeVariations({
+                        ...sizeVariations,
+                        hot: { ...sizeVariations.hot, price: e.target.value }
+                      })}
+                      disabled={!sizeVariations.hot.enabled}
+                      className="w-24"
+                      placeholder="60"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="image" className="text-amber-900 font-semibold">Product Image</Label>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="cursor-pointer"
+                  />
+                  {(formData.image_url || imageFile) && (
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-amber-200">
+                      <img
+                        src={imageFile ? URL.createObjectURL(imageFile) : formData.image_url}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description" className="text-amber-900 font-semibold">Additional Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="mt-2"
-                  placeholder="https://..."
+                  placeholder="Any additional notes..."
+                  rows={2}
                 />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <Button
                   onClick={handleSaveItem}
+                  disabled={uploading}
                   className="flex-1 bg-amber-800 hover:bg-amber-900"
                 >
-                  {editingItem ? 'Update Item' : 'Add Item'}
+                  {uploading ? 'Uploading...' : editingItem ? 'Update Item' : 'Add Item'}
                 </Button>
                 <Button
                   onClick={() => {
                     setShowAddModal(false);
                     setEditingItem(null);
                     resetForm();
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={uploading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Category Image Upload Modal */}
+      {editingCategory && !showCropper && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => {
+            setEditingCategory(null);
+            setCategoryImageFile(null);
+            setCategoryImagePreview(null);
+          }} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-md bg-white rounded-2xl shadow-2xl z-50 p-6 md:p-8">
+            <h2 className="text-2xl font-bold text-amber-900 mb-6">
+              Update {editingCategory.name} Image
+            </h2>
+
+            <div className="space-y-4">
+              {editingCategory.image_url && !categoryImageFile && (
+                <div>
+                  <Label className="text-amber-900 font-semibold mb-2 block">Current Image</Label>
+                  <div className="aspect-video rounded-lg overflow-hidden border-2 border-amber-200">
+                    <img
+                      src={editingCategory.image_url}
+                      alt={editingCategory.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="category-image" className="text-amber-900 font-semibold">
+                  {categoryImageFile ? 'Selected Image' : 'Select New Image'}
+                </Label>
+                <Input
+                  id="category-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleCategoryImageSelect(e.target.files?.[0] || null)}
+                  className="mt-2 cursor-pointer"
+                />
+                {categoryImageFile && (
+                  <div className="mt-4 space-y-2">
+                    <div className="aspect-video rounded-lg overflow-hidden border-2 border-amber-400">
+                      <img
+                        src={URL.createObjectURL(categoryImageFile)}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => setShowCropper(true)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Crop className="h-4 w-4 mr-2" />
+                      Crop Image
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleUpdateCategoryImage}
+                  disabled={!categoryImageFile || uploading}
+                  className="flex-1 bg-amber-800 hover:bg-amber-900"
+                >
+                  {uploading ? 'Uploading...' : 'Update Image'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setEditingCategory(null);
+                    setCategoryImageFile(null);
+                    setCategoryImagePreview(null);
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={uploading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Image Cropper Modal */}
+      {showCropper && categoryImagePreview && (
+        <>
+          <div className="fixed inset-0 bg-black/90 z-[60]" />
+          <div className="fixed inset-4 md:inset-10 bg-white rounded-2xl shadow-2xl z-[60] flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-amber-900">Crop Image</h2>
+            </div>
+            
+            <div className="flex-1 relative bg-gray-100">
+              <Cropper
+                image={categoryImagePreview}
+                crop={crop}
+                zoom={zoom}
+                aspect={4 / 3}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            <div className="p-4 border-t border-gray-200 space-y-4">
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Zoom</Label>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleCropConfirm}
+                  className="flex-1 bg-amber-800 hover:bg-amber-900"
+                >
+                  Apply Crop
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowCropper(false);
+                    setCrop({ x: 0, y: 0 });
+                    setZoom(1);
                   }}
                   variant="outline"
                   className="flex-1"

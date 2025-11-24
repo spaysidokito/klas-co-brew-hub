@@ -126,7 +126,7 @@ export default function CategoryDetailPage() {
                     </p>
                   )}
                   <p className="text-xl md:text-2xl font-bold text-amber-800">
-                    ₱{Number(item.base_price).toFixed(2)}
+                    {item.description?.includes('|') ? 'from ' : ''}₱{Number(item.base_price).toFixed(0)}
                   </p>
                 </div>
               </button>

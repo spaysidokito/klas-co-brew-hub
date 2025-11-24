@@ -4,9 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./contexts/CartContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import MenuHomePage from "./pages/MenuHomePage";
 import CategoryDetailPage from "./pages/CategoryDetailPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
+import StaffLogin from "./pages/StaffLogin";
 import StaffRoleSelection from "./pages/StaffRoleSelection";
 import CashierDashboard from "./pages/CashierDashboard";
 import BaristaDashboard from "./pages/BaristaDashboard";
@@ -27,11 +29,12 @@ const App = () => (
             <Route path="/" element={<MenuHomePage />} />
             <Route path="/category/:slug" element={<CategoryDetailPage />} />
             <Route path="/track-order" element={<TrackOrderPage />} />
-            <Route path="/staff" element={<StaffRoleSelection />} />
-            <Route path="/cashier" element={<CashierDashboard />} />
-            <Route path="/barista" element={<BaristaDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/update-menu" element={<UpdateMenu />} />
+            <Route path="/staff/login" element={<StaffLogin />} />
+            <Route path="/staff" element={<ProtectedRoute><StaffRoleSelection /></ProtectedRoute>} />
+            <Route path="/cashier" element={<ProtectedRoute><CashierDashboard /></ProtectedRoute>} />
+            <Route path="/barista" element={<ProtectedRoute><BaristaDashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/update-menu" element={<ProtectedRoute><UpdateMenu /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
