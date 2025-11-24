@@ -338,11 +338,13 @@ export default function TrackOrderPage() {
               <h3 className="text-2xl font-bold mb-8 text-center text-amber-900">Order Status</h3>
               <div className="relative">
                 {/* Progress Line */}
-                <div className="absolute left-8 md:left-10 top-10 bottom-10 w-1 bg-amber-200 rounded-full" />
+                <div className="absolute left-8 md:left-10 top-10 w-1 bg-amber-200 rounded-full" style={{ height: 'calc(100% - 80px)' }} />
                 <div
                   className="absolute left-8 md:left-10 top-10 w-1 bg-gradient-to-b from-amber-600 to-amber-800 rounded-full transition-all duration-500"
                   style={{
-                    height: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%`,
+                    height: currentStepIndex === statusSteps.length - 1 
+                      ? 'calc(100% - 80px)' 
+                      : `calc((100% - 80px) * ${currentStepIndex / (statusSteps.length - 1)})`,
                   }}
                 />
 
