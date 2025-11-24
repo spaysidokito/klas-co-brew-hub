@@ -45,6 +45,14 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ totalSales: 0, totalOrders: 0, todaySales: 0 });
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    base_price: '',
+    category_id: '',
+    image_url: '',
+  });
   const navigate = useNavigate();
 
   const getOrderNumber = (id: string) => {
@@ -126,6 +134,91 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveItem = async () => {
+    if (!formData.name || !formData.base_price || !formData.category_id) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const itemData = {
+      name: formData.name,
+      description: formData.description || null,
+      base_price: parseFloat(formData.base_price),
+      category_id: formData.category_id,
+      image_url: formData.image_url || null,
+      is_available: true,
+    };
+
+    if (editingItem) {
+      const { error } = await supabase
+        .from('menu_items')
+        .update(itemData)
+        .eq('id', editingItem.id);
+      
+      if (error) {
+        toast.error('Failed to update item');
+      } else {
+        toast.success('Item updated successfully');
+        setEditingItem(null);
+        resetForm();
+        loadMenuItems();
+      }
+    } else {
+      const { error } = await supabase.from('menu_items').insert(itemData);
+      
+      if (error) {
+        toast.error('Failed to add item');
+      } else {
+        toast.success('Item added successfully');
+        setShowAddModal(false);
+        resetForm();
+        loadMenuItems();
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      base_price: '',
+      category_id: '',
+      image_url: '',
+    });
+  };
+
+  const openEditModal = (item: MenuItem) => {
+    setFormData({
+      name: item.name,
+      description: item.description || '',
+      base_price: item.base_price.toString(),
+      category_id: item.category_id,
+      image_url: item.image_url || '',
+    });
+    setEditingItem(item);
+  };
+
+  const handleClearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all transaction history? This cannot be undone.')) return;
+    
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .in('status', ['served', 'cancelled']);
+    
+    if (error) {
+      toast.error('Failed to clear history');
+    } else {
+      toast.success('Transaction history cleared');
+      loadOrders();
+      loadStats();
+    }
+  };
+
+  const filteredMenuItems = selectedCategory === 'all' 
+    ? menuItems 
+    : menuItems.filter(item => item.category_id === selectedCategory);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-amber-50">
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200 shadow-sm">
@@ -188,10 +281,36 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="menu">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-amber-900">Menu Items</h2>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-amber-900">Menu Items</h2>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                    onClick={() => setSelectedCategory('all')}
+                    className={selectedCategory === 'all' ? 'bg-amber-800' : ''}
+                  >
+                    All
+                  </Button>
+                  {categories.map(cat => (
+                    <Button
+                      key={cat.id}
+                      size="sm"
+                      variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={selectedCategory === cat.id ? 'bg-amber-800' : ''}
+                    >
+                      {cat.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               <Button 
-                onClick={() => setShowAddModal(true)}
+                onClick={() => {
+                  resetForm();
+                  setShowAddModal(true);
+                }}
                 className="bg-amber-800 hover:bg-amber-900"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -200,7 +319,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid gap-4">
-              {menuItems.map(item => (
+              {filteredMenuItems.map(item => (
                 <Card key={item.id} className="p-4 md:p-6 bg-white border-amber-200">
                   <div className="flex flex-col md:flex-row gap-4">
                     {item.image_url && (
@@ -230,7 +349,7 @@ export default function AdminDashboard() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setEditingItem(item)}
+                          onClick={() => openEditModal(item)}
                           className="border-amber-500 text-amber-700"
                         >
                           <Edit className="h-4 w-4 mr-1" />
@@ -254,7 +373,17 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="transactions">
-            <h2 className="text-2xl font-bold text-amber-900 mb-6">Transaction History</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-amber-900">Transaction History</h2>
+              <Button
+                onClick={handleClearHistory}
+                variant="outline"
+                className="border-red-500 text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear History
+              </Button>
+            </div>
             <div className="space-y-4">
               {orders.map(order => (
                 <Card key={order.id} className="p-4 md:p-6 bg-white border-amber-200">
@@ -287,6 +416,105 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Add/Edit Modal */}
+      {(showAddModal || editingItem) && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => {
+            setShowAddModal(false);
+            setEditingItem(null);
+            resetForm();
+          }} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-2xl bg-white rounded-2xl shadow-2xl z-50 p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-amber-900 mb-6">
+              {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-amber-900 font-semibold">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="mt-2"
+                  placeholder="e.g., Caramel Macchiato"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description" className="text-amber-900 font-semibold">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="mt-2"
+                  placeholder="e.g., Daily: ₱70 | Extra: ₱90 | Hot: ₱60"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="base_price" className="text-amber-900 font-semibold">Base Price *</Label>
+                <Input
+                  id="base_price"
+                  type="number"
+                  value={formData.base_price}
+                  onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
+                  className="mt-2"
+                  placeholder="70"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category" className="text-amber-900 font-semibold">Category *</Label>
+                <select
+                  id="category"
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="mt-2 w-full border border-gray-300 rounded-md p-2"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="image_url" className="text-amber-900 font-semibold">Image URL</Label>
+                <Input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  className="mt-2"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleSaveItem}
+                  className="flex-1 bg-amber-800 hover:bg-amber-900"
+                >
+                  {editingItem ? 'Update Item' : 'Add Item'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setEditingItem(null);
+                    resetForm();
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
