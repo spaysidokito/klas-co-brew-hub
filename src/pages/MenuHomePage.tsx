@@ -65,6 +65,11 @@ export default function MenuHomePage() {
                   alt="BSIT Logo" 
                   className="h-12 w-12 md:h-16 md:w-16 object-contain"
                 />
+                <img 
+                  src="/stacl-logo.png" 
+                  alt="St. Anne College of Lucena Logo" 
+                  className="h-12 w-12 md:h-16 md:w-16 object-contain"
+                />
               </div>
               <div className="border-l-2 border-amber-300 pl-2 md:pl-3">
                 <h1 className="text-xl md:text-2xl font-bold text-amber-900">KlaséCo</h1>

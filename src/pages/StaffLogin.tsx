@@ -40,8 +40,22 @@ export default function StaffLogin() {
     <div className="min-h-screen bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 bg-white/95 backdrop-blur-md shadow-2xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-amber-100 p-4 rounded-full mb-4">
-            <Coffee className="h-12 w-12 text-amber-800" />
+          <div className="flex items-center gap-3 mb-4">
+            <img 
+              src="/klaseco-logo.png" 
+              alt="KlaséCo Logo" 
+              className="h-16 w-16 object-contain"
+            />
+            <img 
+              src="/bsit-logo.png" 
+              alt="BSIT Logo" 
+              className="h-16 w-16 object-contain"
+            />
+            <img 
+              src="/stacl-logo.png" 
+              alt="St. Anne College of Lucena Logo" 
+              className="h-16 w-16 object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold text-amber-900 mb-2">KlaséCo Staff</h1>
           <p className="text-gray-600 text-center">Enter your credentials to access the staff portal</p>
