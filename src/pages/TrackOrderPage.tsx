@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useSmartPolling } from '@/hooks/useSmartPolling';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Order {
   id: string;
@@ -118,6 +119,25 @@ export default function TrackOrderPage() {
     const hex = id.replace(/-/g, '').substring(0, 8);
     const num = parseInt(hex, 16);
     return (num % 900000 + 100000).toString(); // 6-digit number
+  };
+
+  const markAsComplete = async () => {
+    if (!order) return;
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'served' })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      toast.success('Order marked as complete!');
+      loadOrder(); // Reload to show updated status
+    } catch (error) {
+      console.error('Error marking order as complete:', error);
+      toast.error('Failed to mark order as complete');
+    }
   };
 
   const printReceipt = () => {
@@ -275,11 +295,27 @@ export default function TrackOrderPage() {
                 </ul>
               </div>
 
-              {order.status === 'served' && (
+              {order.status === 'ready' && (
                 <div className="mt-4 pt-4 border-t border-amber-200">
                   <Button 
+                    onClick={markAsComplete}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 rounded-xl shadow-lg"
+                  >
+                    Mark Order as Complete
+                  </Button>
+                </div>
+              )}
+
+              {order.status === 'served' && (
+                <div className="mt-4 pt-4 border-t border-amber-200 space-y-3">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                    <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <p className="text-green-800 font-semibold">Order Completed!</p>
+                    <p className="text-green-700 text-sm">Thank you for your order</p>
+                  </div>
+                  <Button 
                     onClick={printReceipt}
-                    className="w-full bg-amber-800 hover:bg-amber-900"
+                    className="w-full bg-amber-800 hover:bg-amber-900 py-6 rounded-xl"
                   >
                     Print Receipt
                   </Button>
