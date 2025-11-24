@@ -41,7 +41,7 @@ export default function MenuHomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-white to-amber-50/30">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200 shadow-sm">
         <div className="container mx-auto px-4 py-3 md:py-4">
