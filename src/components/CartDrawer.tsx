@@ -23,6 +23,12 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  const getOrderNumber = (id: string) => {
+    const hex = id.replace(/-/g, '').substring(0, 8);
+    const num = parseInt(hex, 16);
+    return (num % 900000 + 100000).toString();
+  };
+
   const handlePlaceOrder = async () => {
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error('Please fill in your name and phone number');
@@ -81,10 +87,11 @@ export const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         }
       }
 
-      toast.success('Order placed successfully!');
+      const orderNumber = getOrderNumber(order.id);
+      toast.success(`Order #${orderNumber} placed successfully!`);
       clearCart();
       onClose();
-      navigate(`/track-order?id=${order.id}`);
+      navigate(`/track-order?id=${orderNumber}`);
     } catch (error) {
       console.error('Error placing order:', error);
       toast.error('Failed to place order. Please try again.');

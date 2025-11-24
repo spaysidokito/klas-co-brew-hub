@@ -344,7 +344,7 @@ export default function CashierDashboard() {
       {showCalculator && (
         <>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setShowCalculator(false)} />
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-lg bg-white rounded-3xl shadow-2xl z-50 p-6 md:p-8">
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-xl bg-white rounded-3xl shadow-2xl z-50 p-6 md:p-8 max-h-[95vh] overflow-y-auto">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               {currentOrder?.payment_method === 'cash' ? 'Cash' : 'GCash'} Payment - Order #{currentOrder ? getOrderNumber(currentOrder.id) : ''}
             </h2>
@@ -365,43 +365,43 @@ export default function CashierDashboard() {
             </div>
 
             {/* Number Pad */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
                   key={num}
                   onClick={() => setCalcReceived(calcReceived + num.toString())}
-                  className="bg-gray-100 hover:bg-gray-200 rounded-xl p-6 text-2xl font-semibold text-gray-700 transition-colors"
+                  className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl p-6 md:p-8 text-2xl md:text-3xl font-semibold text-gray-700 transition-colors"
                 >
                   {num}
                 </button>
               ))}
               <button
                 onClick={() => setCalcReceived(calcReceived + '.')}
-                className="bg-gray-100 hover:bg-gray-200 rounded-xl p-6 text-2xl font-semibold text-gray-700 transition-colors"
+                className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl p-6 md:p-8 text-2xl md:text-3xl font-semibold text-gray-700 transition-colors"
               >
                 .
               </button>
               <button
                 onClick={() => setCalcReceived(calcReceived + '0')}
-                className="bg-gray-100 hover:bg-gray-200 rounded-xl p-6 text-2xl font-semibold text-gray-700 transition-colors"
+                className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl p-6 md:p-8 text-2xl md:text-3xl font-semibold text-gray-700 transition-colors"
               >
                 0
               </button>
               <button
                 onClick={() => setCalcReceived(calcReceived + '00')}
-                className="bg-gray-100 hover:bg-gray-200 rounded-xl p-6 text-2xl font-semibold text-gray-700 transition-colors"
+                className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl p-6 md:p-8 text-2xl md:text-3xl font-semibold text-gray-700 transition-colors"
               >
                 00
               </button>
             </div>
 
             {/* Quick Amount Buttons */}
-            <div className="grid grid-cols-5 gap-2 mb-4">
+            <div className="grid grid-cols-5 gap-2 md:gap-3 mb-4">
               {[20, 50, 100, 500, 1000].map((amount) => (
                 <button
                   key={amount}
                   onClick={() => setCalcReceived((parseFloat(calcReceived || '0') + amount).toString())}
-                  className="border-2 border-amber-600 text-amber-700 hover:bg-amber-50 rounded-lg py-3 font-semibold transition-colors"
+                  className="border-2 border-amber-600 text-amber-700 hover:bg-amber-50 active:bg-amber-100 rounded-lg py-3 md:py-4 font-semibold text-sm md:text-base transition-colors"
                 >
                   ₱{amount}
                 </button>
