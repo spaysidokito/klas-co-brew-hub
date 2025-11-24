@@ -53,14 +53,7 @@ export default function MenuHomePage() {
                 <p className="text-xs md:text-sm text-amber-700 hidden sm:block">Premium Coffee Experience</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-amber-800 hover:text-amber-900 hover:bg-amber-100"
-              onClick={() => navigate('/staff')}
-            >
-              <span className="text-sm">Staff</span>
-            </Button>
+            {/* Staff button hidden - access via /staff URL directly */}
           </div>
         </div>
       </header>
