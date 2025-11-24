@@ -34,7 +34,6 @@ interface Order {
 
 const statusSteps = [
   { key: 'pending', label: 'Order Received', icon: Clock },
-  { key: 'accepted', label: 'Confirmed', icon: CheckCircle2 },
   { key: 'preparing', label: 'Preparing', icon: Coffee },
   { key: 'ready', label: 'Ready', icon: Bell },
   { key: 'served', label: 'Served', icon: CheckCircle2 },
