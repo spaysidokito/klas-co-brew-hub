@@ -10,6 +10,7 @@ import TrackOrderPage from "./pages/TrackOrderPage";
 import StaffRoleSelection from "./pages/StaffRoleSelection";
 import CashierDashboard from "./pages/CashierDashboard";
 import BaristaDashboard from "./pages/BaristaDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import UpdateMenu from "./pages/UpdateMenu";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/staff" element={<StaffRoleSelection />} />
             <Route path="/cashier" element={<CashierDashboard />} />
             <Route path="/barista" element={<BaristaDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/update-menu" element={<UpdateMenu />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
