@@ -53,7 +53,14 @@ export default function MenuHomePage() {
                 <p className="text-xs md:text-sm text-amber-700 hidden sm:block">Premium Coffee Experience</p>
               </div>
             </div>
-            {/* Staff button hidden - access via /staff URL directly */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-amber-800 border-amber-300 hover:bg-amber-100 hover:border-amber-400 font-semibold"
+              onClick={() => navigate('/track-order')}
+            >
+              Track Order
+            </Button>
           </div>
         </div>
       </header>

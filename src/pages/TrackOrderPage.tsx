@@ -185,21 +185,26 @@ export default function TrackOrderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 bg-card border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-amber-50">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-200 shadow-sm">
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate('/')}
+              className="text-amber-800 hover:text-amber-900 hover:bg-amber-100"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-semibold">Track Order</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-amber-900">Track Order</h1>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
+      <main className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
         <form onSubmit={handleTrack} className="mb-8">
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <Label htmlFor="orderId" className="sr-only">
                 Order ID
@@ -209,17 +214,27 @@ export default function TrackOrderPage() {
                 placeholder="Enter your order ID"
                 value={orderId}
                 onChange={e => setOrderId(e.target.value)}
+                className="h-12 text-lg border-amber-300 focus:border-amber-500 rounded-xl"
               />
             </div>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="h-12 px-8 bg-amber-800 hover:bg-amber-900 rounded-xl font-semibold"
+            >
               {loading ? 'Tracking...' : 'Track Order'}
             </Button>
           </div>
         </form>
 
         {notFound && (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">
+          <Card className="p-12 text-center bg-white border-amber-200 rounded-2xl shadow-lg">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p className="text-gray-700 text-lg">
               Order not found. Please check your order ID and try again.
             </p>
           </Card>
@@ -272,49 +287,52 @@ export default function TrackOrderPage() {
               )}
             </Card>
 
-            <Card className="p-8">
-              <h3 className="text-xl font-semibold mb-6 text-center">Order Status</h3>
+            <Card className="p-6 md:p-8 bg-white border-amber-200 rounded-2xl shadow-lg">
+              <h3 className="text-2xl font-bold mb-8 text-center text-amber-900">Order Status</h3>
               <div className="relative">
                 {/* Progress Line */}
-                <div className="absolute left-8 top-8 bottom-8 w-0.5 bg-border" />
+                <div className="absolute left-8 md:left-10 top-10 bottom-10 w-1 bg-amber-200 rounded-full" />
                 <div
-                  className="absolute left-8 top-8 w-0.5 bg-primary transition-all duration-500"
+                  className="absolute left-8 md:left-10 top-10 w-1 bg-gradient-to-b from-amber-600 to-amber-800 rounded-full transition-all duration-500"
                   style={{
                     height: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%`,
                   }}
                 />
 
                 {/* Steps */}
-                <div className="relative space-y-8">
+                <div className="relative space-y-6 md:space-y-8">
                   {statusSteps.map((step, idx) => {
                     const isComplete = idx <= currentStepIndex;
                     const isCurrent = idx === currentStepIndex;
                     const Icon = step.icon;
 
                     return (
-                      <div key={step.key} className="flex items-center gap-4">
+                      <div key={step.key} className="flex items-center gap-4 md:gap-6">
                         <div
                           className={cn(
-                            'w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300',
+                            'w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg',
                             isComplete
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground',
-                            isCurrent && 'ring-4 ring-primary/20 scale-110'
+                              ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white'
+                              : 'bg-gray-200 text-gray-400',
+                            isCurrent && 'ring-4 ring-amber-300 scale-110 animate-pulse'
                           )}
                         >
-                          <Icon className="h-7 w-7" />
+                          <Icon className="h-7 w-7 md:h-9 md:w-9" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p
                             className={cn(
-                              'font-medium transition-colors',
-                              isComplete ? 'text-foreground' : 'text-muted-foreground'
+                              'font-semibold text-base md:text-lg transition-colors',
+                              isComplete ? 'text-amber-900' : 'text-gray-400'
                             )}
                           >
                             {step.label}
                           </p>
                           {isCurrent && (
-                            <p className="text-sm text-primary">In progress...</p>
+                            <p className="text-sm text-amber-700 font-medium animate-pulse">In progress...</p>
+                          )}
+                          {isComplete && !isCurrent && (
+                            <p className="text-xs text-amber-600">✓ Completed</p>
                           )}
                         </div>
                       </div>
